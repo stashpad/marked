@@ -9,10 +9,17 @@ import {
  */
 export class Renderer {
   constructor(options) {
-    this.options = options || defaults;
+    this.options = { ...defaults, ...options };
   }
 
-  code(code, infostring, escaped) {
+  generateDataAttributes(origin) {
+    if (!origin || !this.options.includeOrigin) {
+      return '';
+    }
+    return ` data-origin-start="${origin.start}" data-origin-end=${origin.end}" `;
+  }
+
+  code(code, infostring, escaped, origin) {
     const lang = (infostring || '').match(/\S*/)[0];
     if (this.options.highlight) {
       const out = this.options.highlight(code, lang);
@@ -25,12 +32,12 @@ export class Renderer {
     code = code.replace(/\n$/, '') + '\n';
 
     if (!lang) {
-      return '<pre><code>'
+      return `<pre${this.generateDataAttributes(origin)}><code>`
         + (escaped ? code : escape(code, true))
         + '</code></pre>\n';
     }
 
-    return '<pre><code class="'
+    return `<pre${this.generateDataAttributes(origin)}><code class="`
       + this.options.langPrefix
       + escape(lang, true)
       + '">'
@@ -41,8 +48,8 @@ export class Renderer {
   /**
    * @param {string} quote
    */
-  blockquote(quote) {
-    return `<blockquote>\n${quote}</blockquote>\n`;
+  blockquote(quote, origin) {
+    return `<blockquote${this.generateDataAttributes(origin)}>\n${quote}</blockquote>\n`;
   }
 
   html(html) {
@@ -55,35 +62,42 @@ export class Renderer {
    * @param {string} raw
    * @param {any} slugger
    */
-  heading(text, level, raw, slugger) {
+  heading(text, level, raw, slugger, origin) {
+    // is header from 2 lines or 1
+    const expectedHashLength = Array(level).fill('#').join('') + ' ' + text;
+    const expectedLength = expectedHashLength.length;
+    const actualLength = origin.end - origin.start - '\n'.length;
+    let hashHeader = true;
+    if (expectedLength !== actualLength) hashHeader = false;
+
     if (this.options.headerIds) {
       const id = this.options.headerPrefix + slugger.slug(raw);
-      return `<h${level} id="${id}">${text}</h${level}>\n`;
+      return `<h${level} data-hash-header=${hashHeader} id="${id}"${this.generateDataAttributes(origin)}>${text}</h${level}>\n`;
     }
 
     // ignore IDs
-    return `<h${level}>${text}</h${level}>\n`;
+    return `<h${level}${this.generateDataAttributes(origin)} data-hash-header=${hashHeader}>${text}</h${level}>\n`;
   }
 
-  hr() {
-    return this.options.xhtml ? '<hr/>\n' : '<hr>\n';
+  hr(origin) {
+    return this.options.xhtml ? `<hr${this.generateDataAttributes(origin)} />\n` : `<hr${this.generateDataAttributes(origin)}>\n`;
   }
 
-  list(body, ordered, start) {
+  list(body, ordered, start, origin) {
     const type = ordered ? 'ol' : 'ul',
       startatt = (ordered && start !== 1) ? (' start="' + start + '"') : '';
-    return '<' + type + startatt + '>\n' + body + '</' + type + '>\n';
+    return '<' + type + startatt + `${this.generateDataAttributes(origin)}>\n` + body + '</' + type + '>\n';
   }
 
   /**
    * @param {string} text
    */
-  listitem(text) {
-    return `<li>${text}</li>\n`;
+  listitem(text, task, checked, origin) {
+    return `<li${this.generateDataAttributes(origin)}>${text}</li>\n`;
   }
 
-  checkbox(checked) {
-    return '<input '
+  checkbox(checked, origin) {
+    return `<input${this.generateDataAttributes(origin)} `
       + (checked ? 'checked="" ' : '')
       + 'disabled="" type="checkbox"'
       + (this.options.xhtml ? ' /' : '')
@@ -93,8 +107,8 @@ export class Renderer {
   /**
    * @param {string} text
    */
-  paragraph(text) {
-    return `<p>${text}</p>\n`;
+  paragraph(text, origin) {
+    return `<p${this.generateDataAttributes(origin)}>${text}</p>\n`;
   }
 
   /**
@@ -131,22 +145,22 @@ export class Renderer {
    * span level renderer
    * @param {string} text
    */
-  strong(text) {
-    return `<strong>${text}</strong>`;
+  strong(text, origin) {
+    return `<strong${this.generateDataAttributes(origin)}>${text}</strong>`;
   }
 
   /**
    * @param {string} text
    */
-  em(text) {
-    return `<em>${text}</em>`;
+  em(text, origin) {
+    return `<em${this.generateDataAttributes(origin)}>${text}</em>`;
   }
 
   /**
    * @param {string} text
    */
-  codespan(text) {
-    return `<code>${text}</code>`;
+  codespan(text, origin) {
+    return `<code ${this.generateDataAttributes(origin)}>${text}</code>`;
   }
 
   br() {
@@ -156,8 +170,8 @@ export class Renderer {
   /**
    * @param {string} text
    */
-  del(text) {
-    return `<del>${text}</del>`;
+  del(text, origin) {
+    return `<del${this.generateDataAttributes(origin)}>${text}</del>`;
   }
 
   /**

@@ -14,7 +14,7 @@ export class Parser {
     this.options = options || defaults;
     this.options.renderer = this.options.renderer || new Renderer();
     this.renderer = this.options.renderer;
-    this.renderer.options = this.options;
+    // this.renderer.options = this.options;
     this.textRenderer = new TextRenderer();
     this.slugger = new Slugger();
   }
@@ -75,11 +75,10 @@ export class Parser {
 
       switch (token.type) {
         case 'space': {
-          out += this.renderer.paragraph('');
           continue;
         }
         case 'hr': {
-          out += this.renderer.hr();
+          out += this.renderer.hr(token.origin);
           continue;
         }
         case 'heading': {
@@ -87,13 +86,15 @@ export class Parser {
             this.parseInline(token.tokens),
             token.depth,
             unescape(this.parseInline(token.tokens, this.textRenderer)),
-            this.slugger);
+            this.slugger,
+            token.origin);
           continue;
         }
         case 'code': {
           out += this.renderer.code(token.text,
             token.lang,
-            token.escaped);
+            token.escaped,
+            token.origin);
           continue;
         }
         case 'table': {
@@ -131,7 +132,7 @@ export class Parser {
         }
         case 'blockquote': {
           body = this.parse(token.tokens);
-          out += this.renderer.blockquote(body);
+          out += this.renderer.blockquote(body, token.origin);
           continue;
         }
         case 'list': {
@@ -148,7 +149,7 @@ export class Parser {
 
             itemBody = '';
             if (item.task) {
-              checkbox = this.renderer.checkbox(checked);
+              checkbox = this.renderer.checkbox(checked, item.origin);
               if (loose) {
                 if (item.tokens.length > 0 && item.tokens[0].type === 'paragraph') {
                   item.tokens[0].text = checkbox + ' ' + item.tokens[0].text;
@@ -167,10 +168,10 @@ export class Parser {
             }
 
             itemBody += this.parse(item.tokens, loose);
-            body += this.renderer.listitem(itemBody, task, checked);
+            body += this.renderer.listitem(itemBody, task, checked, item.origin);
           }
 
-          out += this.renderer.list(body, ordered, start);
+          out += this.renderer.list(body, ordered, start, token.origin);
           continue;
         }
         case 'html': {
@@ -179,7 +180,7 @@ export class Parser {
           continue;
         }
         case 'paragraph': {
-          out += this.renderer.paragraph(this.parseInline(token.tokens));
+          out += this.renderer.paragraph(this.parseInline(token.tokens), token.origin);
           continue;
         }
         case 'text': {
@@ -248,15 +249,15 @@ export class Parser {
           break;
         }
         case 'strong': {
-          out += renderer.strong(this.parseInline(token.tokens, renderer));
+          out += renderer.strong(this.parseInline(token.tokens, renderer), token.origin);
           break;
         }
         case 'em': {
-          out += renderer.em(this.parseInline(token.tokens, renderer));
+          out += renderer.em(this.parseInline(token.tokens, renderer), token.origin);
           break;
         }
         case 'codespan': {
-          out += renderer.codespan(token.text);
+          out += renderer.codespan(token.text, token.origin);
           break;
         }
         case 'br': {
@@ -264,11 +265,11 @@ export class Parser {
           break;
         }
         case 'del': {
-          out += renderer.del(this.parseInline(token.tokens, renderer));
+          out += renderer.del(this.parseInline(token.tokens, renderer), token.origin);
           break;
         }
         case 'text': {
-          out += renderer.text(token.text);
+          out += renderer.text(token.text, token.origin);
           break;
         }
         default: {
