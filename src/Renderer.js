@@ -211,7 +211,7 @@ export class Renderer {
     return out;
   }
 
-  text(text) {
-    return text;
+  text(text, origin) {
+    return `<span${this.generateDataAttributes(origin)}>${text}</span>`;
   }
 }
