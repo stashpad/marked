@@ -16,7 +16,7 @@ export class Renderer {
     if (!origin || !this.options.includeOrigin) {
       return '';
     }
-    return ` data-origin-start="${origin.start}" data-origin-end=${origin.end}" `;
+    return ` data-origin-start="${origin.start}" data-origin-end="${origin.end}" `;
   }
 
   code(code, infostring, escaped, origin) {
