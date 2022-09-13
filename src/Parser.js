@@ -91,7 +91,6 @@ export class Parser {
           continue;
         }
         case 'code': {
-          console.log('code origin', token.origin);
           out += this.renderer.code(token.text,
             token.lang,
             token.escaped,

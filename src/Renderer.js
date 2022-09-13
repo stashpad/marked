@@ -20,7 +20,6 @@ export class Renderer {
   }
 
   code(code, infostring, escaped, origin) {
-    console.log('rendering', code, origin)
     const lang = (infostring || '').match(/\S*/)[0];
     if (this.options.highlight) {
       const out = this.options.highlight(code, lang);
