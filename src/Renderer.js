@@ -184,6 +184,7 @@ export class Renderer {
     if (href === null) {
       return text;
     }
+
     let out = '<a target="_blank" href="' + escape(href) + '"';
     if (title) {
       out += ' title="' + title + '"';
